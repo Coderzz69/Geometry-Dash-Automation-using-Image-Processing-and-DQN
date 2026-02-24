@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# PyTorch models and Checkpoints
+
+*.pt
+models/
+checkpoints/
+
+# Template images for OpenCV matching
+attempt_template.png
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# MacOS
+.DS_Store
