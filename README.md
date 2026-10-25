@@ -4,10 +4,7 @@ A deep Q-network that learns to play **Geometry Dash** from the pixels on screen
 does. It doesn't read the game's memory and doesn't use a mod or API. It watches a 128×128 grayscale
 copy of the window, decides up to 20 times a second whether to hold the jump button, and learns from dying.
 
-<p align="center">
-  <a href="docs/demo.mp4"><img src="docs/demo.gif" width="800" alt="How the agent sees, decides and detects a crash (the level is an illustration, not game footage)"></a>
-  <br><a href="docs/demo.mp4"><b>▶ Watch the 38-second explainer (with sound)</b></a>
-</p>
+https://github.com/user-attachments/assets/e30906f1-97d7-46c2-a727-508c697aa81f
 
 ## The loop
 
