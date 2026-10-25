@@ -9,7 +9,7 @@ Training RL Agents from raw pixels is notoriously unstable and requires careful 
 - **`EPSILON_START (1.0)`**: The agent starts completely blind, taking 100% random actions to explore the environment state space.
 - **`EPSILON_END (0.05)`**: The permanent 5% randomness leftover at the end of training to ensure the agent doesn't get stuck in a strict local minimum.
 - **`EPSILON_DECAY (10000)`**: Controls how fast the exploration decays. An exponential delay is used.
-- **`LEARNING_RATE (1e-4)`**: Standard low learning rate for Adam optimizer to ensure stable updates on the Huber Loss function.
+- **`LEARNING_RATE (1e-4)`**: Standard low learning rate for Adam optimizer to keep the updates stable.
 - **`TARGET_UPDATE (50)`**: How often the stable Target Network copies weights from the actively training Policy Network.
 - **`MEMORY_CAPACITY (20000)`**: How many experiences to hold before overwriting old ones.
 

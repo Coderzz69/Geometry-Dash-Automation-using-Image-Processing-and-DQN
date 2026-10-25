@@ -32,4 +32,4 @@ To avoid catastrophic forgetting and stabilize the target metric, we use an Expe
 - **Dual Networks**: 
   - `policy_net` receives live gradients and updates every step.
   - `target_net` acts as a stable anchor for the Bellman Equation (calculating the temporal difference target). The `policy_net` weights are copied to the `target_net` every `N` steps (e.g. 50 steps).
-- **Loss Calculation**: We use **Huber Loss** (`SmoothL1Loss`) coupled with strict Gradient Clipping (Max Norm = 1.0) to prevent exploding gradients when encountering massive error spikes.
+- **Loss Calculation**: We use **MSE loss** (`MSELoss`) on rewards scaled to [-1, 1], coupled with strict Gradient Clipping (Max Norm = 1.0) to prevent exploding gradients when encountering massive error spikes.

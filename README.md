@@ -1,63 +1,65 @@
-# Geometry Dash RL AI 🤖🧊
+# Geometry Dash, Played by a DQN
 
-A PyTorch-based Reinforcement Learning intelligent agent that learns to play **Geometry Dash**. This project uses a Deep Q-Network (DQN) architecture to process raw screen pixels and compute optimal jump timings to beat levels without accessing the game's internal memory.
+A deep Q-network that learns to play **Geometry Dash** from the pixels on screen, the way a person
+does. It doesn't read the game's memory and doesn't use a mod or API. It watches a 128×128 grayscale
+copy of the window, decides up to 20 times a second whether to hold the jump button, and learns from dying.
 
-## 🚀 Key Features
-- **Computer Vision Pipeline**: High-speed, 60 FPS screen capturing using `mss` and OpenCV.
-- **Deep Q-Network (DQN)**: A Convolutional Neural Network (CNN) implemented in PyTorch that acts as a feature extractor to learn from 128x128 grayscale frames.
-- **Experience Replay Buffer**: Improves sample efficiency and stabilizes training by storing past state transitions.
-- **Custom RL Environment**: An OpenAI Gym-like wrapper that automates interactions using `pyautogui` and detects deaths via template matching and frame differences.
-- **Epsilon-Greedy Exploration**: Balances exploring new strategies vs. exploiting the current best known policy.
+<p align="center">
+  <a href="docs/demo.mp4"><img src="docs/demo.gif" width="800" alt="How the agent sees, decides and detects a crash (the level is an illustration, not game footage)"></a>
+  <br><a href="docs/demo.mp4"><b>▶ Watch the 38-second explainer (with sound)</b></a>
+</p>
 
-## 📁 Project Structure
+## The loop
 
-```text
-GD_RL/
-├── env.py                  # Custom RL environment wrapper to interface with the game.
-├── dqn_model.py            # PyTorch architecture for the CNN DQN agent.
-├── screen_capture.py       # High FPS background window capturing script.
-├── replay_buffer.py        # Experience replay buffer logic.
-├── train.py                # Main training loop with Bellman Equation implementation.
-├── capture_death_screen.py # Script to capture 'Attempt' text for death detection.
-└── requirements.txt        # Project dependencies.
+```
+screen ──► grayscale 128×128 ──► CNN ──► Q(release), Q(hold) ──► mouse down / up ──► did it die?
+  ▲                                                                                     │
+  └──────────────────────── replay buffer (20,000 transitions) ◄───────── +1 alive, −100 dead
 ```
 
-## 🛠️ Prerequisites
-- Python 3.8+
-- [Geometry Dash](https://store.steampowered.com/app/322170/Geometry_Dash/) (Must be visible on screen during training)
-- Linux (using `xdotool` for window positioning), or tweak screen bounds for Windows/macOS.
+| Piece | How |
+|---|---|
+| **Seeing** (`screen_capture.py`) | Finds the game window with `xdotool` and grabs it with `mss` |
+| **Acting** (`env.py`) | `pyautogui` presses or releases the left mouse button in the window, then waits 50 ms |
+| **Dying** (`env.py`) | The level stops scrolling when you crash, so five near-identical frames in a row (MSE < 5) mean death. Matching the "Attempt" text is a fallback |
+| **Restarting** (`env.py`) | Clicks Retry and presses space, then a new episode starts |
+| **Brain** (`dqn_model.py`) | 3 conv layers (32·8×8/4, 64·4×4/2, 64·3×3/1) → 512 → 2 Q-values. 1 × 128 × 128 in, about 4.8M parameters |
+| **Learning** (`train.py`) | DQN with a target network synced every 50 steps, batches of 64, γ = 0.99, Adam at 1e-4, MSE loss on rewards scaled to [−1, 1], gradient norm clipped at 1. Exploration decays from 100% to 5% over about 10,000 steps |
 
-## ⚙️ Setup & Installation
-1. Clone the repository and navigate to the project directory:
-   ```bash
-   git clone <repository_url>
-   cd GD_RL
-   ```
-2. Create and activate a Virtual Environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # Or `venv\Scripts\activate` on Windows
-   ```
-3. Install the dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Setup Death Template:
-   Take a screenshot of the "Attempt" text when you die in-game, crop it securely, and save it as `attempt_template.png` in the project root. This acts as the visual trigger for deaths.
+## Run it
 
-## 🎮 How to Run (Training)
+Needs Geometry Dash (Steam) visible on screen, Linux with `xdotool`, and Python 3.8+.
 
-1. Launch Geometry Dash and ensure the window is open and unobstructed.
-2. Run the main training script:
-   ```bash
-   python train.py
-   ```
-3. You have 3 seconds to tab back into the game. The AI will immediately begin capturing frames, resetting, and learning.
-4. **Stopping safely**: Press `Ctrl+C` in your terminal. This triggers a `KeyboardInterrupt` which ensures the `policy_net` is safely serialized and saved to `gd_dqn_model.pth`.
+```bash
+pip install -r requirements.txt
+python capture_death_screen.py   # optional: save the "Attempt" text as a death template
+python train.py                  # then switch to the game within 3 seconds
+```
 
-## 📚 Documentation
-- [Architecture Details](ARCHITECTURE.md) - Deep dive into the CNN and the Replay logic.
-- [Training Guide](TRAINING_GUIDE.md) - Adjusting hyper-parameters and understanding loss metrics.
+Training prints one line per step and a summary per episode. Survival time (`Steps`) climbing from
+episode to episode is the sign it's learning:
 
----
-*Built with PyTorch, OpenCV, and lots of crashes.*
+```
+Ep   1 | Step   42 | Action: Jump  | Reward:    1.0 | Loss: 0.0412
+Episode 1 | Steps: 43 | Reward: -57 | Loss: 0.8111 | Epsilon: 0.985
+```
+
+`Ctrl+C` stops training and saves the network to `gd_dqn_model.pth`. A checkpoint is included.
+
+Keep the game window where it is during training: the Retry click is computed from the window's
+position. On Windows or macOS, replace the `xdotool` lookup in `screen_capture.py` with fixed screen
+coordinates.
+
+## Files
+
+| File | |
+|---|---|
+| `train.py` | Training loop and hyperparameters |
+| `env.py` | Gym-style wrapper: `reset()`, `step(action)`, death detection |
+| `dqn_model.py` | The CNN |
+| `replay_buffer.py` | Experience replay |
+| `screen_capture.py` | Window lookup and capture |
+| `capture_death_screen.py` | Saves the death template |
+| [ARCHITECTURE.md](ARCHITECTURE.md), [TRAINING_GUIDE.md](TRAINING_GUIDE.md) | Design notes and hyperparameter guide |
+
+Built with PyTorch, OpenCV and a lot of crashes.
